@@ -1,7 +1,10 @@
 {
     "name": "singed-bot",
-    "version": "1.0.1",
+    "version": "1.1",
     "description": "My First singed Bot",
+    "scripts": {
+        "start":"node index.js"
+    },
     "main": "bot.js",
     "author": "Cally",
     "dependencies": {

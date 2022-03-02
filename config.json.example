@@ -1,0 +1,5 @@
+{
+    "BOT_TOKEN":"bot token",
+    "RIOT_TOKEN":"riot games api token",
+    "prefix":"$"
+}
