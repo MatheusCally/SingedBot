@@ -8,7 +8,8 @@ const client = new Discord.Client({intents: ["GUILDS", "GUILD_MESSAGES","GUILD_P
 
 const https = require('https')
 
-const http = require('http')
+const http = require('http');
+const { Console } = require("console");
 
 client.login(config.BOT_TOKEN);
 
@@ -18,6 +19,9 @@ const prefix = "$";
 
 // Riot APIs token
 const singedBotToken = "RGAPI-0bf6db59-5698-45ee-9fd9-1bf7922f0ec8"
+
+// Riot APIs hostname
+const riotHostname = 'br1.api.riotgames.com'
 
 // Function for retrieving all League of Legends Champions
 function champions(){
@@ -36,12 +40,32 @@ function champions(){
             res.on('end', async function() {
                 resolve(JSON.parse(body)['data'])
             });
-        }).on('error', function(e) {
-            console.log("Got error: " + e.message);
-        });
+        }).on('error', reject);
     })
 }
 
+// Retrieve summoner data
+function summonerData(summoner){
+    const summonerDataOptions = {
+        hostname: riotHostname,
+        path: '/lol/summoner/v4/summoners/by-name/' + encodeURIComponent(summoner.trim()),
+        headers: {
+            "X-Riot-Token": singedBotToken
+        }
+        
+    }
+    return new Promise(function(resolve,reject){
+        https.get(summonerDataOptions, (res) => {
+            var body = '';
+            res.on('data', function(chunk) {
+                body += chunk;
+            });
+            res.on('end', function() {
+                resolve(JSON.parse(body))
+            });
+        }).on('error', reject);
+    })
+}
 // Add minutes into a date
 function addMinutes(date, minutes) {
     return new Date(date.getTime() + minutes*60000);
@@ -96,9 +120,9 @@ client.on("messageCreate", function(message) {
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
         
-
+        
         switch(command){
-
+            
             // Help command
             case 'help':
             const embed = new MessageEmbed()
@@ -115,16 +139,60 @@ client.on("messageCreate", function(message) {
                 { name: '$ban {usuario} {tempo}', value: 'aplica timeout no usuário marcado no tempo indicado, caso não seja informado o tempo, serão só 5 minutos' },
                 { name: '$unban {usuario}', value: 'retira o timeout do usuário marcado' },
                 { name: '$rot', value: 'lista os campeões na rotação da semana' },
+                { name: '$rot {nome de invocador}', value: 'diz o main da pessoa a partir do nome de invocador' },
                 )
                 .setImage('https://i.imgur.com/iIzaJGg.jpg')
                 .setFooter({ text: 'Está do seu agrado???'});
                 message.reply({ embeds: [embed]})
                 break;
                 
+                // Returns the champion with most mastery from a summoner
+                case "main":
+                if(args[0]){
+                    summoner = message.content.slice(prefix.length + command.length + 1)
+                    summonerData(summoner).then(sum => {
+                        const lolMasterySummonerOptions = {
+                            hostname: riotHostname,
+                            path: '/lol/champion-mastery/v4/champion-masteries/by-summoner/' + sum['id'],
+                            headers: {
+                                "X-Riot-Token": singedBotToken
+                            }
+                        }
+                        https.get(lolMasterySummonerOptions, res => {
+                            var body = '';
+                            res.on('data', function(chunk) {
+                                body += chunk;
+                            });
+                            res.on('end', function() {
+                                mastery = JSON.parse(body)
+                                if(res.statusCode == 200){
+                                    champions().then(ch => {
+                                        for(var keys of Object.keys(ch)){
+                                          if(ch[keys]['key'] == mastery[0]['championId']){
+                                              keys == 'Singed' ? message.reply(`${summoner} é main ${ch[keys]['name']}, melhor boneco do jogo, está do meu agrado!`) :  message.reply(`${summoner} é main ${ch[keys]['name']}, pior boneco do jogo, isto deve doer!`)
+                                              break;
+                                          }  
+                                        }
+                                    }
+                                    )
+                                }
+                                else{
+                                    message.reply(`${summoner} não existe, escreve direito fazendo o favor`)
+                                }
+                                
+                            });
+                        }).on('error', function(e) {
+                            console.log("Got error: " + e.message);
+                        });
+                    })
+                }
+                break
+                
+                
                 // Returns free League of Legends champions of the week
                 case "rot":
                 const lolRotationOptions = {
-                    hostname: 'br1.api.riotgames.com',
+                    hostname: riotHostname,
                     path: '/lol/platform/v3/champion-rotations',
                     method: 'GET',
                     headers: {
@@ -143,7 +211,6 @@ client.on("messageCreate", function(message) {
                             .setTitle('Campeões na rotação')
                             .setColor('#1d8e25')
                             .setThumbnail('https://i.imgur.com/TlidKnV.png')
-                            .setImage('https://i.imgur.com/iIzaJGg.jpg')
                             .setFooter({ text: 'Está do seu agrado???'});
                             // 
                             for(var rotationId of championsId){
@@ -161,7 +228,7 @@ client.on("messageCreate", function(message) {
                     console.log("Got error: " + e.message);
                 });
                 break;
-
+                
                 // Send a message marking all users playing League of Legends at the moment, and threatens them
                 case "lol":
                 message.guild.members.cache.filter(member => {
