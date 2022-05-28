@@ -27,7 +27,7 @@ const riotHostname = 'br1.api.riotgames.com'
 function champions(){
     const lolChampionByIdOptions = {
         hostname: 'ddragon.leagueoflegends.com',
-        path: '/cdn/12.5.1/data/pt_BR/champion.json',
+        path: '/cdn/12.6.1/data/pt_BR/champion.json',
         method: 'GET',
     }
     return new Promise(function(resolve,reject){
@@ -119,10 +119,26 @@ client.on("messageCreate", function(message) {
         const commandBody = message.content.slice(prefix.length);
         const args = commandBody.split(' ');
         const command = args.shift().toLowerCase();
-        
+       
         
         switch(command){
-            
+            case 'roletarussa':
+                if(adminCheck(message)){
+                    const userId = message.member.id;
+                    
+                    message.guild.members.fetch(userId).then(res => {
+                    var voiceChatRelated = res.voice;
+                    const membersInVoice = voiceChatRelated.channel.members;
+                    var memberToKick = membersInVoice.random();
+                    memberToKick.voice.disconnect(`ROLETA RUSSA RODOU E UMA DEDADA VOCÊ TOMOU`)
+                    message.reply(`<@${memberToKick.user.id}> ROLETA RUSSA RODOU E UMA DEDADA VOCÊ TOMOU`)
+                    }) 
+                    
+                }
+                
+            break;
+
+
             // Help command
             case 'help':
             const embed = new MessageEmbed()
@@ -139,7 +155,7 @@ client.on("messageCreate", function(message) {
                 { name: '$ban {usuario} {tempo}', value: 'aplica timeout no usuário marcado no tempo indicado, caso não seja informado o tempo, serão só 5 minutos' },
                 { name: '$unban {usuario}', value: 'retira o timeout do usuário marcado' },
                 { name: '$rot', value: 'lista os campeões na rotação da semana' },
-                { name: '$rot {nome de invocador}', value: 'diz o main da pessoa a partir do nome de invocador' },
+                { name: '$main {nome de invocador}', value: 'diz o main da pessoa a partir do nome de invocador' },
                 )
                 .setImage('https://i.imgur.com/iIzaJGg.jpg')
                 .setFooter({ text: 'Está do seu agrado???'});
