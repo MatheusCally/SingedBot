@@ -109,6 +109,7 @@ function adminCheck(message){
 
 // Actions executed when the bot is runned
 client.on('ready', () => {
+    console.info("[SingedBot] Singed Bot Started")
     //Set bot game activity
     client.user.setActivity('cola no seu pé',{type: 'PLAYING',url: 'http://colherelerda.com'});
 })
