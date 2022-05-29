@@ -4,7 +4,7 @@ const config = require("./config.json");
 
 const { MessageEmbed } = require('discord.js');
 
-const client = new Discord.Client({intents: ["GUILDS", "GUILD_MESSAGES","GUILD_PRESENCES","GUILD_MEMBERS","GUILD_BANS"]});
+const client = new Discord.Client({intents: ["GUILDS", "GUILD_MESSAGES","GUILD_PRESENCES","GUILD_MEMBERS","GUILD_BANS", 'GUILD_VOICE_STATES']});
 
 const https = require('https')
 
