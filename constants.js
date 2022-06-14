@@ -5,8 +5,6 @@ const singedBotToken = "RGAPI-0bf6db59-5698-45ee-9fd9-1bf7922f0ec8"
 // Riot APIs hostname
 const riotHostname = 'br1.api.riotgames.com'
 
-// Lol patch
-const patch = "12.10.1"
 
 const embedHelp = new MessageEmbed()
             .setTitle('Comandos do Singed Bot')
@@ -27,4 +25,4 @@ const embedHelp = new MessageEmbed()
                 .setImage('https://i.imgur.com/iIzaJGg.jpg')
                 .setFooter({ text: 'Está do seu agrado???'});
 
-export {singedBotToken,riotHostname,patch,embedHelp}
+export {singedBotToken,riotHostname,embedHelp}

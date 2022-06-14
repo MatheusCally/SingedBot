@@ -50,7 +50,7 @@ export function memberTimeout(message,id,minutes,reason){
     message.guild.members.cache.filter(member => {
         if(member.user.id == id){
             member.disableCommunicationUntil(addMinutes(new Date(),minutes),reason ? reason : '').then((member)=>{
-                replyMessage = `<@${member.user.id}> tomou ${minutes} minutinhos pra ficar esperto, isto deve doer! `;
+                const replyMessage = `<@${member.user.id}> tomou ${minutes} minutinhos pra ficar esperto, isto deve doer! `;
                 console.log(replyMessage);
                 message.reply(replyMessage);
             });
@@ -63,7 +63,7 @@ export function memberRemoveTimeout(message,id){
     message.guild.members.cache.filter(member => {
         if(member.user.id == id){
             member.disableCommunicationUntil(null).then((member)=>{
-                replyMessage = `<@${member.user.id}> liberdade cantou, eu te ouço!`
+                const replyMessage = `<@${member.user.id}> liberdade cantou, eu te ouço!`
                 console.log(replyMessage);
                 message.reply(replyMessage)
             });

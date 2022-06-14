@@ -1,6 +1,6 @@
 {
     "name": "singed-bot",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "description": "My First singed Bot",
     "main": "index.js",
     "author": "Cally",
@@ -12,7 +12,7 @@
         "nodemon": "^2.0.16"
     },
     "scripts": {
-        "start:dev": "nodemon --experimental-json-modules index.js"
+        "start:dev": "nodemon index.js"
     },
     "type": "module"
 }

@@ -1,13 +1,14 @@
 import Discord from 'discord.js';
-import config from './config.json' assert {type: 'json'};
 import {patch,champions,summonerData,memberTimeout,memberRemoveTimeout,adminCheck} from './functions.js';
 import {MessageEmbed} from 'discord.js';
-import https from 'https';
 import {singedBotToken as SINGED_BOT_TOKEN,riotHostname as RIOT_HOSTNAME,embedHelp as EMBED_HELP} from './constants.js';
 import fetch from 'node-fetch';
+import {exec} from 'child_process';
+import { BOT_TOKEN } from './config.js';
+
 const client = new Discord.Client({intents: ["GUILDS", "GUILD_MESSAGES","GUILD_PRESENCES","GUILD_MEMBERS","GUILD_BANS", 'GUILD_VOICE_STATES']});
 
-client.login(config.BOT_TOKEN);
+client.login(BOT_TOKEN);
 
 
 // Bot Prefix for messages
@@ -115,13 +116,13 @@ client.on("messageCreate", async function(message) {
             case "ban":
             if(adminCheck(message)){
                 if(args[0]){
-                    
-                    arg1 = args.shift().toLowerCase();
+                    console.log(args)
+                    const arg1 = args.shift().toLowerCase();
                     console.log(arg1)
-                    userId = arg1.substring(arg1.indexOf('@') + 1,arg1.indexOf('>'));
+                    const userId = arg1.substring(arg1.indexOf('@') + 1,arg1.indexOf('>'));
                     
                     if(args[0]){
-                        minutes = args.shift().toLowerCase();
+                        const minutes = args.shift().toLowerCase();
                         isNaN(minutes) ? '' : memberTimeout(message,userId,minutes,'Banido by Singed Bot');
                     } else{
                         memberTimeout(message,userId,5,'Banido by Singed Bot');
@@ -134,7 +135,7 @@ client.on("messageCreate", async function(message) {
             case "unban":
             if(adminCheck(message)){
                 if(args[0]){
-                    userId = args[0].substring(args[0].indexOf('@') + 1,args[0].indexOf('>'));
+                    const userId = args[0].substring(args[0].indexOf('@') + 1,args[0].indexOf('>'));
                     memberRemoveTimeout(message,userId);
                 }
             }
@@ -149,6 +150,7 @@ client.on('ready', () => {
     console.info("[SingedBot] Singed Bot Started")
     //Set bot game activity
     client.user.setActivity('cola no seu pé',{type: 'PLAYING',url: 'http://colherelerda.com'});
+    exec("TITLE Singed Bot",(error, stdout, stderr) => {})
 })
 
 // Send a message on the channel when an user is kicked
