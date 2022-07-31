@@ -59,7 +59,7 @@ client.on("messageCreate", async function(message) {
                     const ch = await champs.data;
                     for(var keys of Object.keys(ch)){
                         if(ch[keys]['key'] == mastery[0]['championId']){
-                            keys == 'Singed' ? message.reply(`${summoner} é main ${ch[keys]['name']}, melhor boneco do jogo com ${mastery[0]['championPoints'].toLocaleString('pt-BR')} pontos, está do meu agrado!`) :  message.reply(`${summoner} é main ${ch[keys]['name']} com ${mastery[0]['championPoints']} pontos, pior boneco do jogo, isto deve doer!`)
+                            keys == 'Singed' ? message.reply(`${summoner} é main ${ch[keys]['name']}, melhor boneco do jogo com ${mastery[0]['championPoints'].toLocaleString('pt-BR')} pontos, está do meu agrado!`) :  message.reply(`${summoner} é main ${ch[keys]['name']} com ${mastery[0]['championPoints'].toLocaleString('pt-BR')} pontos, pior boneco do jogo, isto deve doer!`)
                             break;
                         }  
                     }
