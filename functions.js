@@ -80,3 +80,61 @@ export function adminCheck(message){
         return false;
     }
 }
+
+export async function getSummoner(summonerName){
+    const response = await fetch(`https://${RIOT_HOSTNAME}/lol/summoner/v4/summoners/by-name/${summonerName}`,{
+        headers: {
+            "X-Riot-Token": SINGED_BOT_TOKEN
+        }
+    })
+    const data = await response.json();
+    return data;
+}
+
+export async function getLatestMatches(id, count=20){
+   const response = await fetch(`https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${id}/ids?count=${count}`,{
+    headers: {
+        "X-Riot-Token": SINGED_BOT_TOKEN
+    }
+   })
+   const data = await response.json();
+   return data
+}
+
+export async function getMatchFromId(id){
+    const response = await fetch(`https://americas.api.riotgames.com/lol/match/v5/matches/${id}`,{
+        headers: {
+            "X-Riot-Token": SINGED_BOT_TOKEN
+        }
+    })
+    const data = await response.json();
+    return data;
+}
+
+export async function getDeathNumberBySummonerName(summonerName){
+    const summoner = await getSummoner(summonerName)
+    const puuid = summoner.puuid;
+    const matches = await getLatestMatches(puuid);
+    const match = await getMatchFromId(matches[0]);
+    var deaths = -1;
+    if(match.info){
+        match.info.participants.forEach(player => {
+            if(player.puuid == puuid){
+                deaths = player.deaths;
+            }
+        });
+    }
+    return deaths;
+}
+
+export async function getSingedMasteryFromSummonerName(summonerName){
+    const summoner = await getSummoner(summonerName)
+    const id = summoner.id;
+    const response = await fetch(`https://${RIOT_HOSTNAME}/lol/champion-mastery/v4/champion-masteries/by-summoner/${id}/by-champion/27`,{
+        headers: {
+            "X-Riot-Token": SINGED_BOT_TOKEN
+        }
+    });
+    const data = await response.json();
+    return data.championPoints;
+}

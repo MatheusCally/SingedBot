@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
-import {patch,champions,summonerData,memberTimeout,memberRemoveTimeout,adminCheck} from './functions.js';
+import {patch,champions,summonerData,memberTimeout,memberRemoveTimeout,adminCheck,getDeathNumberBySummonerName,getSingedMasteryFromSummonerName} from './functions.js';
 import {MessageEmbed} from 'discord.js';
-import {singedBotToken as SINGED_BOT_TOKEN,riotHostname as RIOT_HOSTNAME,embedHelp as EMBED_HELP} from './constants.js';
+import {singedBotToken as SINGED_BOT_TOKEN,riotHostname as RIOT_HOSTNAME,embedHelp as EMBED_HELP, embedTop3 as EMBED_TOP3} from './constants.js';
 import fetch from 'node-fetch';
 import {exec} from 'child_process';
 import { BOT_TOKEN } from './config.js';
@@ -16,133 +16,172 @@ const prefix = "$";
 
 // Message command reader
 client.on("messageCreate", async function(message) { 
-    if(message.content.charAt(0) == prefix && !message.member.user.bot){
-        const commandBody = message.content.slice(prefix.length);
-        const args = commandBody.split(' ');
-        const command = args.shift().toLowerCase();
-        
-        
-        switch(command){
-            case 'roletarussa':
-            if(adminCheck(message)){
-                const userId = message.member.id;
-                message.guild.members.fetch(userId).then(res => {
-                    var voiceChatRelated = res.voice;
-                    const membersInVoice = voiceChatRelated.channel.members;
-                    var memberToKick = membersInVoice.random();
-                    memberToKick.voice.disconnect(`ROLETA RUSSA RODOU E UMA DEDADA VOCÊ TOMOU`)
-                    message.reply(`<@${memberToKick.user.id}> ROLETA RUSSA RODOU E UMA DEDADA VOCÊ TOMOU`)
-                }) 
-            }
-            break;
+    try{
+        if(message.content.charAt(0) == prefix && !message.member.user.bot){
+            const commandBody = message.content.slice(prefix.length);
+            const args = commandBody.split(' ');
+            const command = args.shift().toLowerCase();
             
-            case 'patch':
-            message.reply(`Tamo no patch ${await patch()} chefe`)
-            break;
-            // Help command
-            case 'help':
-            message.reply({ embeds: [EMBED_HELP]})
-            break;
             
-            // Returns the champion with most mastery from a summoner
-            case "main":
-            if(args[0]){
-                const summoner = message.content.slice(prefix.length + command.length + 1)
-                const sum = await summonerData(summoner);
-                const response = await fetch(`https://${RIOT_HOSTNAME}/lol/champion-mastery/v4/champion-masteries/by-summoner/${sum['id']}`,{
+            switch(command){
+                case 'roletarussa':
+                if(adminCheck(message)){
+                    const userId = message.member.id;
+                    message.guild.members.fetch(userId).then(res => {
+                        var voiceChatRelated = res.voice;
+                        const membersInVoice = voiceChatRelated.channel.members;
+                        var memberToKick = membersInVoice.random();
+                        memberToKick.voice.disconnect(`ROLETA RUSSA RODOU E UMA DEDADA VOCÊ TOMOU`)
+                        message.reply(`<@${memberToKick.user.id}> ROLETA RUSSA RODOU E UMA DEDADA VOCÊ TOMOU`)
+                    }) 
+                }
+                break;
+                
+                case 'patch':
+                message.reply(`Tamo no patch ${await patch()} chefe`)
+                break;
+                // Help command
+                case 'help':
+                message.reply({ embeds: [EMBED_HELP]})
+                break;
+                
+                // Returns the champion with most mastery from a summoner
+                case "main":
+                if(args[0]){
+                    const summoner = message.content.slice(prefix.length + command.length + 1)
+                    const sum = await summonerData(summoner);
+                    const response = await fetch(`https://${RIOT_HOSTNAME}/lol/champion-mastery/v4/champion-masteries/by-summoner/${sum['id']}`,{
+                    headers: {
+                        "X-Riot-Token": SINGED_BOT_TOKEN
+                    }})
+                    const mastery = await response.json()
+                    if(response.status == 200){
+                        const champs = await champions();
+                        const ch = await champs.data;
+                        for(var keys of Object.keys(ch)){
+                            if(ch[keys]['key'] == mastery[0]['championId']){
+                                keys == 'Singed' ? message.reply(`${summoner} é main ${ch[keys]['name']}, melhor boneco do jogo com ${mastery[0]['championPoints'].toLocaleString('pt-BR')} pontos, está do meu agrado!`) :  message.reply(`${summoner} é main ${ch[keys]['name']} com ${mastery[0]['championPoints'].toLocaleString('pt-BR')} pontos, pior boneco do jogo, isto deve doer!`)
+                                break;
+                            }  
+                        }
+                    }
+                    else{
+                        message.reply(`${summoner} não existe, escreve direito fazendo o favor`)
+                    }
+                }
+                break
+                
+                
+                // Returns free League of Legends champions of the week
+                case "rot":
+                const response = await fetch(`https://${RIOT_HOSTNAME}/lol/platform/v3/champion-rotations`, {
                 headers: {
                     "X-Riot-Token": SINGED_BOT_TOKEN
                 }})
-                const mastery = await response.json()
-                if(response.status == 200){
-                    const champs = await champions();
-                    const ch = await champs.data;
-                    for(var keys of Object.keys(ch)){
-                        if(ch[keys]['key'] == mastery[0]['championId']){
-                            keys == 'Singed' ? message.reply(`${summoner} é main ${ch[keys]['name']}, melhor boneco do jogo com ${mastery[0]['championPoints'].toLocaleString('pt-BR')} pontos, está do meu agrado!`) :  message.reply(`${summoner} é main ${ch[keys]['name']} com ${mastery[0]['championPoints'].toLocaleString('pt-BR')} pontos, pior boneco do jogo, isto deve doer!`)
-                            break;
-                        }  
-                    }
-                }
-                else{
-                    message.reply(`${summoner} não existe, escreve direito fazendo o favor`)
-                }
-            }
-            break
-            
-            
-            // Returns free League of Legends champions of the week
-            case "rot":
-            const response = await fetch(`https://${RIOT_HOSTNAME}/lol/platform/v3/champion-rotations`, {
-            headers: {
-                "X-Riot-Token": SINGED_BOT_TOKEN
-            }})
-            const data = await response.json()
-            const championsId = await data[Object.keys(data)[0]]
-            const championsres = await champions();
-            const rotationEmbed = new MessageEmbed()
-            .setTitle('Campeões na rotação')
-            .setColor('#1d8e25')
-            .setThumbnail('https://i.imgur.com/TlidKnV.png')
-            .setFooter({ text: 'Está do seu agrado???'});
-            // 
-            
-            for(var rotationId of championsId){
-                for(var championName of Object.keys(championsres.data)){
-                    if(championsres.data[championName]['key'] == rotationId){
-                        rotationEmbed.addField(championsres.data[championName]['id'],championsres.data[championName]['title'])
-                    }
-                }
-            }
-            message.reply({ embeds: [rotationEmbed]})
-            console.log("Showing rotation champions")
-            break;
-            
-            // Send a message marking all users playing League of Legends at the moment, and threatens them
-            case "lol":
-            message.guild.members.cache.filter(member => {
-                if(member.presence){
-                    if(member.presence.activities.length > 0){
-                        if(member.presence.activities[0].name == 'League of Legends'){
-                            message.channel.send(`<@${member.user.id}> toma cuidado, vai levar ban se continuar jogando Lol.`);
+                const data = await response.json()
+                const championsId = await data[Object.keys(data)[0]]
+                const championsres = await champions();
+                const rotationEmbed = new MessageEmbed()
+                .setTitle('Campeões na rotação')
+                .setColor('#1d8e25')
+                .setThumbnail('https://i.imgur.com/TlidKnV.png')
+                .setFooter({ text: 'Está do seu agrado???'});
+                // 
+                
+                for(var rotationId of championsId){
+                    for(var championName of Object.keys(championsres.data)){
+                        if(championsres.data[championName]['key'] == rotationId){
+                            rotationEmbed.addField(championsres.data[championName]['id'],championsres.data[championName]['title'])
                         }
-                        
                     }
                 }
-            });
-            break;
-            
-            // Applies timeout on specified user for the specified minutes (time is optional, 5 minutes default)
-            case "ban":
-            if(adminCheck(message)){
-                if(args[0]){
-                    console.log(args)
-                    const arg1 = args.shift().toLowerCase();
-                    console.log(arg1)
-                    const userId = arg1.substring(arg1.indexOf('@') + 1,arg1.indexOf('>'));
-                    
+                message.reply({ embeds: [rotationEmbed]})
+                console.log("Showing rotation champions")
+                break;
+                
+                // Send a message marking all users playing League of Legends at the moment, and threatens them
+                case "lol":
+                message.guild.members.cache.filter(member => {
+                    if(member.presence){
+                        if(member.presence.activities.length > 0){
+                            if(member.presence.activities[0].name == 'League of Legends'){
+                                message.channel.send(`<@${member.user.id}> toma cuidado, vai levar ban se continuar jogando Lol.`);
+                            }
+                            
+                        }
+                    }
+                });
+                break;
+                
+                // Applies timeout on specified user for the specified minutes (time is optional, 5 minutes default)
+                case "ban":
+                if(adminCheck(message)){
                     if(args[0]){
-                        const minutes = args.shift().toLowerCase();
-                        isNaN(minutes) ? '' : memberTimeout(message,userId,minutes,'Banido by Singed Bot');
-                    } else{
-                        memberTimeout(message,userId,5,'Banido by Singed Bot');
-                    }
-                } 
-            }
-            break;
-            
-            // Removes timeout from user
-            case "unban":
-            if(adminCheck(message)){
-                if(args[0]){
-                    const userId = args[0].substring(args[0].indexOf('@') + 1,args[0].indexOf('>'));
-                    memberRemoveTimeout(message,userId);
+                        console.log(args)
+                        const arg1 = args.shift().toLowerCase();
+                        console.log(arg1)
+                        const userId = arg1.substring(arg1.indexOf('@') + 1,arg1.indexOf('>'));
+                        
+                        if(args[0]){
+                            const minutes = args.shift().toLowerCase();
+                            isNaN(minutes) ? '' : memberTimeout(message,userId,minutes,'Banido by Singed Bot');
+                        } else{
+                            memberTimeout(message,userId,5,'Banido by Singed Bot');
+                        }
+                    } 
                 }
+                break;
+                
+                // Removes timeout from user
+                case "unban":
+                if(adminCheck(message)){
+                    if(args[0]){
+                        const userId = args[0].substring(args[0].indexOf('@') + 1,args[0].indexOf('>'));
+                        memberRemoveTimeout(message,userId);
+                    }
+                }
+                break;
+                
+                case "mortes":
+                var summoner = message.content.slice(prefix.length + command.length + 1);
+                const deaths = await getDeathNumberBySummonerName(summoner);
+                if(deaths > 0){
+                    message.reply(`${summoner} conseguiu morrer ${deaths} vezes na última partida.`)
+                } 
+                else{
+                    throw new Error('BAD REQUEST');
+                }
+                break;
+
+                case "singed":
+                var summoner = message.content.slice(prefix.length + command.length + 1);
+                const singedMastery = await getSingedMasteryFromSummonerName(summoner);
+                message.reply(`${summoner} tem ${singedMastery.toLocaleString('pt-BR')} pontos de Singed :face_with_monocle: `)
+                break;
+
+                case "eleicao":
+                    const eleicoes = await fetch('https://resultados.tse.jus.br/oficial/ele2022/545/dados-simplificados/br/br-c0001-e000545-r.json');
+                    console.log(eleicoes.status)
+                    const bolsoJson = await eleicoes.json();
+                    const listaCandidatos = bolsoJson['cand'];
+                    const bolsonaro = listaCandidatos.find(c => c['n'] == '22');
+                    const lula = listaCandidatos.find(c => c['n'] == '13');
+                    // message.reply(`Bolsonaro: ${bolsonaro['pvap']}%, Lula: ${lula['pvap']}% | Apurado ${bolsoJson['pst']}%`)
+                    message.reply('VAI TOMAR NO CU LULA FILHO DE UIMA PUTA!!!!@!');
+                break;
+
+                case 'top3':
+                    var subject = message.content.slice(prefix.length + command.length + 1);
+                    message.guild.members.list({ limit: message.guild.memberCount }).then(res => {
+                        const membersChoose = res.filter(member => !member.user.bot).random(3);
+                        message.reply({embeds: [EMBED_TOP3(subject, membersChoose)]});
+                    })
             }
-            break;
-            
         }
+    } catch(error){
+        message.reply('[ERRO] Banirão singed :(')
     }
+    
 }); 
 
 // Actions executed when the bot is runned

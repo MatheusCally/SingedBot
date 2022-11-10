@@ -1,4 +1,4 @@
-import {MessageEmbed} from 'discord.js';
+import {DiscordAPIError, MessageEmbed} from 'discord.js';
 // Riot APIs token
 const singedBotToken = "RGAPI-0bf6db59-5698-45ee-9fd9-1bf7922f0ec8"
 
@@ -25,4 +25,13 @@ const embedHelp = new MessageEmbed()
                 .setImage('https://i.imgur.com/iIzaJGg.jpg')
                 .setFooter({ text: 'Está do seu agrado???'});
 
-export {singedBotToken,riotHostname,embedHelp}
+function embedTop3(subject, membersList){
+    const message = new MessageEmbed()
+                    .setTitle(`Top 3 ${subject} do servidor`)
+                    .setFooter({ text: 'Está do seu agrado???'});
+    message.addField(':first_place:',membersList[0].user.username);
+    message.addField(':second_place:',membersList[1].user.username);
+    message.addField(':third_place:',membersList[2].user.username);
+    return message;
+}
+export {singedBotToken,riotHostname,embedHelp, embedTop3}
